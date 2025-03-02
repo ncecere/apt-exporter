@@ -1,0 +1,9 @@
+check_interval_seconds: 300
+listen_address: ":9100"               # IP:port where the HTTP server listens
+apt_check_path: "/usr/lib/update-notifier/apt-check"
+update_stamp_path: "/var/lib/apt/periodic/update-success-stamp"
+reboot_required_file: "/var/run/reboot-required"
+log_level: "info"                     # Options: debug, info, warn, error
+command_timeout_seconds: 10           # Timeout (in seconds) for external commands
+metrics_endpoint: "/metrics"          # URL path for exposing metrics
+metric_prefix: "ubuntu"               # Prefix added to all metric names
