@@ -42,51 +42,31 @@ The prefix is configurable in the configuration file (default: `ubuntu`).
 
 ## Installation
 
-### GitHub Releases
+For detailed installation instructions, please see [INSTALL.md](INSTALL.md).
 
-Pre-built binaries for Linux (amd64, arm64, arm, 386) are available on the [GitHub Releases](https://github.com/ncecere/apt-exporter/releases) page.
+### Quick Start
 
 ```bash
 # Download the latest release for your architecture (example for amd64)
-curl -L https://github.com/ncecere/apt-exporter/releases/latest/download/apt-exporter-vX.Y.Z-linux-amd64.tar.gz -o apt-exporter.tar.gz
+curl -L https://github.com/ncecere/apt-exporter/releases/download/v0.1.0/apt-exporter_0.1.0_linux_amd64.tar.gz -o apt-exporter.tar.gz
 
 # Extract the archive
 tar -xzf apt-exporter.tar.gz
 
-# Make the binary executable
-chmod +x apt-exporter-vX.Y.Z-linux-amd64
-
-# Move the binary to a location in your PATH
-sudo mv apt-exporter-vX.Y.Z-linux-amd64 /usr/local/bin/apt-exporter
+# Make the binary executable and move it to a location in your PATH
+chmod +x apt-exporter
+sudo mv apt-exporter /usr/local/bin/
 
 # Copy and adjust the configuration file
 sudo mkdir -p /etc/apt-exporter
 sudo cp config.yml /etc/apt-exporter/
 ```
 
-### From Source
-
-```bash
-# Clone the repository
-git clone https://github.com/ncecere/apt-exporter.git
-cd apt-exporter
-
-# Build the binary
-go build -o apt-exporter cmd/apt-exporter/main.go
-
-# Copy the binary to a location in your PATH
-sudo cp apt-exporter /usr/local/bin/
-
-# Copy and adjust the configuration file
-sudo mkdir -p /etc/apt-exporter
-sudo cp config.yml /etc/apt-exporter/
-```
-
-### Using Go Install
-
-```bash
-go install github.com/ncecere/apt-exporter/cmd/apt-exporter@latest
-```
+See [INSTALL.md](INSTALL.md) for more detailed instructions, including:
+- Building from source
+- Setting up as a system service
+- Troubleshooting common issues
+- Updating and uninstalling
 
 ## Configuration
 
@@ -203,27 +183,32 @@ Run the tests with:
 go test ./...
 ```
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes in each release.
+
 ## Releasing
 
 To create a new release:
 
-1. Create a new tag with the version number (following [Semantic Versioning](https://semver.org/)):
+1. Update the [CHANGELOG.md](CHANGELOG.md) file with the changes in the new version.
+
+2. Create a new tag with the version number (following [Semantic Versioning](https://semver.org/)):
 
 ```bash
 git tag -a v1.0.0 -m "Release v1.0.0"
 ```
 
-2. Push the tag to GitHub:
+3. Push the tag to GitHub:
 
 ```bash
 git push origin v1.0.0
 ```
 
-3. GitHub Actions will automatically:
+4. GitHub Actions will automatically:
    - Build the binaries for different Linux architectures
    - Create a GitHub release
    - Upload the binaries to the release
-   - Generate a changelog based on commits since the last release
 
 ## License
 
