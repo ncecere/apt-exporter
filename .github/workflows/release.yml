@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags starting with 'v', e.g., v1.0.0
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required for GoReleaser to work correctly
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-binaries:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64, arm, "386"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Get tag version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          OUTPUT_NAME=apt-exporter-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          go build -v -o "${OUTPUT_NAME}" ./cmd/apt-exporter
+
+          # Create archive
+          tar -czf "${OUTPUT_NAME}.tar.gz" "${OUTPUT_NAME}" LICENSE README.md config.yml
+          echo "ASSET=${OUTPUT_NAME}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload binary to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.ASSET }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release:
+    needs: [build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get tag version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 ${{ env.VERSION }}^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            git log --pretty=format:"* %s (%h)" ${{ env.VERSION }} > CHANGELOG.md
+          else
+            git log --pretty=format:"* %s (%h)" $PREV_TAG..${{ env.VERSION }} > CHANGELOG.md
+          fi
+          echo "CHANGELOG_FILE=CHANGELOG.md" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ env.VERSION }}
+          body_path: ${{ env.CHANGELOG_FILE }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

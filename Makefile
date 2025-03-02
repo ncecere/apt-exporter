@@ -10,11 +10,17 @@ GOMOD=$(GOCMD) mod
 BINARY_NAME=apt-exporter
 BINARY_UNIX=$(BINARY_NAME)_unix
 
+# Version information
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS = -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
+
 # Build the project
 all: test build
 
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/apt-exporter
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) -v ./cmd/apt-exporter
 
 # Clean build files
 clean:
@@ -36,16 +42,16 @@ deps:
 
 # Build for Linux
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./cmd/apt-exporter
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) -v ./cmd/apt-exporter
 
 # Run the application
 run:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/apt-exporter
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) -v ./cmd/apt-exporter
 	./$(BINARY_NAME)
 
 # Install the application
 install:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/apt-exporter
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) -v ./cmd/apt-exporter
 	mv $(BINARY_NAME) $(GOPATH)/bin/
 
 # Format code

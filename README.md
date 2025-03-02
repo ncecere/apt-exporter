@@ -26,11 +26,33 @@ The prefix is configurable in the configuration file (default: `ubuntu`).
 
 ## Requirements
 
-- Go 1.18 or higher
-- Debian/Ubuntu-based system with APT
+- Linux (Debian/Ubuntu-based system with APT)
+- Go 1.18 or higher (for building from source)
 - `/usr/lib/update-notifier/apt-check` script (provided by the `update-notifier-common` package)
 
 ## Installation
+
+### GitHub Releases
+
+Pre-built binaries for Linux (amd64, arm64, arm, 386) are available on the [GitHub Releases](https://github.com/ncecere/apt-exporter/releases) page.
+
+```bash
+# Download the latest release for your architecture (example for amd64)
+curl -L https://github.com/ncecere/apt-exporter/releases/latest/download/apt-exporter-vX.Y.Z-linux-amd64.tar.gz -o apt-exporter.tar.gz
+
+# Extract the archive
+tar -xzf apt-exporter.tar.gz
+
+# Make the binary executable
+chmod +x apt-exporter-vX.Y.Z-linux-amd64
+
+# Move the binary to a location in your PATH
+sudo mv apt-exporter-vX.Y.Z-linux-amd64 /usr/local/bin/apt-exporter
+
+# Copy and adjust the configuration file
+sudo mkdir -p /etc/apt-exporter
+sudo cp config.yml /etc/apt-exporter/
+```
 
 ### From Source
 
@@ -146,6 +168,28 @@ A sample Grafana dashboard is available in the `dashboards` directory. Import th
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Releasing
+
+To create a new release:
+
+1. Create a new tag with the version number (following [Semantic Versioning](https://semver.org/)):
+
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+```
+
+2. Push the tag to GitHub:
+
+```bash
+git push origin v1.0.0
+```
+
+3. GitHub Actions will automatically:
+   - Build the binaries for different Linux architectures
+   - Create a GitHub release
+   - Upload the binaries to the release
+   - Generate a changelog based on commits since the last release
 
 ## License
 
