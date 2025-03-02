@@ -28,6 +28,7 @@ func main() {
 	// Parse command-line flags
 	configPath := flag.String("config", "config.yml", "Path to YAML configuration file")
 	showVersion := flag.Bool("version", false, "Show version information")
+	skipPathValidation := flag.Bool("skip-path-validation", false, "Skip validation of file paths (useful for testing)")
 	flag.Parse()
 
 	// Show version information if requested
@@ -47,8 +48,16 @@ func main() {
 	}
 	logger.Printf("Configuration loaded from %s", *configPath)
 
-	// Configure logging level (basic implementation)
-	// A more sophisticated logging library could be used here
+	// Validate file paths if not skipped
+	if !*skipPathValidation {
+		if err := cfg.ValidateFilePaths(); err != nil {
+			logger.Printf("Warning: %v", err)
+			logger.Println("Continuing anyway, but some metrics may not be collected correctly")
+		}
+	}
+
+	// Configure logging level
+	configureLogging(cfg.LogLevel, logger)
 
 	// Initialize metrics
 	m := metrics.NewMetrics(cfg.MetricPrefix)
@@ -104,4 +113,21 @@ func main() {
 	}
 
 	logger.Println("APT exporter stopped")
+}
+
+// configureLogging sets up the logger based on the configured log level
+func configureLogging(level string, logger *log.Logger) {
+	// This is a simple implementation that could be expanded
+	// with a more sophisticated logging library
+	switch level {
+	case "debug":
+		logger.SetFlags(log.LstdFlags | log.Lshortfile)
+		logger.Println("Debug logging enabled")
+	case "info":
+		logger.SetFlags(log.LstdFlags)
+	case "warn", "error":
+		// For these levels, we might want to filter out less severe messages
+		// but the standard log package doesn't support this directly
+		logger.SetFlags(log.LstdFlags)
+	}
 }

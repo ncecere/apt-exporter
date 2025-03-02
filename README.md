@@ -15,12 +15,22 @@ These metrics are exposed in Prometheus format, allowing you to monitor your Deb
 
 ## Metrics
 
+### Core Metrics
+
 | Metric Name | Description | Type |
 |-------------|-------------|------|
 | `<prefix>_updates_available` | Number of available package updates | Gauge |
 | `<prefix>_security_updates_available` | Number of available security updates | Gauge |
 | `<prefix>_seconds_since_last_update` | Seconds since last successful apt update | Gauge |
 | `<prefix>_reboot_required` | 1 if a reboot is required, 0 otherwise | Gauge |
+
+### Collector Metrics
+
+| Metric Name | Description | Type |
+|-------------|-------------|------|
+| `<prefix>_collector_success` | 1 if the last collection was successful, 0 otherwise | Gauge |
+| `<prefix>_collector_duration_seconds` | Duration of the last collection in seconds | Gauge |
+| `<prefix>_collector_last_timestamp` | Timestamp of the last collection | Gauge |
 
 The prefix is configurable in the configuration file (default: `ubuntu`).
 
@@ -118,6 +128,12 @@ apt-exporter
 
 # Run with a specific configuration file
 apt-exporter -config /etc/apt-exporter/config.yml
+
+# Show version information
+apt-exporter -version
+
+# Skip validation of file paths (useful for testing)
+apt-exporter -skip-path-validation
 ```
 
 ## Running as a Service
@@ -168,6 +184,24 @@ A sample Grafana dashboard is available in the `dashboards` directory. Import th
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development
+
+The project follows standard Go project layout:
+
+- `cmd/apt-exporter/`: Main application entry point
+- `internal/`: Internal packages
+  - `config/`: Configuration handling
+  - `collector/`: Metrics collection logic
+  - `metrics/`: Prometheus metrics definitions
+
+### Testing
+
+Run the tests with:
+
+```bash
+go test ./...
+```
 
 ## Releasing
 

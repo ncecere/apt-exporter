@@ -1,4 +1,5 @@
 # GoReleaser configuration for apt-exporter
+version: 2
 project_name: apt-exporter
 
 before:
@@ -19,8 +20,13 @@ builds:
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
 
+# Snapshot configuration
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
 archives:
-  - format: tar.gz
+  -
+    # Use the default format (tar.gz for linux/macos, zip for windows)
     files:
       - LICENSE
       - README.md
@@ -28,9 +34,6 @@ archives:
 
 checksum:
   name_template: 'checksums.txt'
-
-snapshot:
-  name_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
