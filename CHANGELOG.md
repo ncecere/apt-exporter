@@ -41,5 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling throughout the codebase
 - Enhanced configuration validation
 - Better path handling with absolute path resolution
+- Graceful handling of empty or unexpected output from apt-check
+- Fixed apt-check output handling (now captures both stdout and stderr)
+- Updated systemd service to run as root for proper permissions
 
 [v0.1.0]: https://github.com/ncecere/apt-exporter/releases/tag/v0.1.0
