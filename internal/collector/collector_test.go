@@ -55,7 +55,7 @@ echo "5;2" >&2
 		MetricPrefix:          "test",
 	}
 
-	// Create metrics
+	// Create metrics (using the test metrics implementation)
 	m := metrics.NewTestMetrics()
 
 	// Create collector

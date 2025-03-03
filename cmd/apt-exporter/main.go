@@ -14,6 +14,7 @@ import (
 	"github.com/ncecere/apt-exporter/internal/collector"
 	"github.com/ncecere/apt-exporter/internal/config"
 	"github.com/ncecere/apt-exporter/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -59,16 +60,24 @@ func main() {
 	// Configure logging level
 	configureLogging(cfg.LogLevel, logger)
 
-	// Initialize metrics
-	m := metrics.NewMetrics(cfg.MetricPrefix)
+	// Create a custom registry that doesn't include Go runtime metrics
+	registry := prometheus.NewRegistry()
+
+	// Initialize metrics with the custom registry (false = don't register with default registry)
+	m := metrics.NewMetrics(cfg.MetricPrefix, false)
 	logger.Printf("Metrics initialized with prefix: %s", cfg.MetricPrefix)
+
+	// Register our metrics with the custom registry
+	for _, collector := range m.GetCollectors() {
+		registry.MustRegister(collector)
+	}
 
 	// Create collector
 	c := collector.New(cfg, m)
 
-	// Set up HTTP server for metrics endpoint
-	http.Handle(cfg.MetricsEndpoint, promhttp.Handler())
-	logger.Printf("Metrics endpoint registered at %s", cfg.MetricsEndpoint)
+	// Set up HTTP server for metrics endpoint with the custom registry
+	http.Handle(cfg.MetricsEndpoint, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	logger.Printf("Metrics endpoint registered at %s (without Go runtime metrics)", cfg.MetricsEndpoint)
 
 	// Create a context that will be canceled on SIGINT or SIGTERM
 	ctx, cancel := context.WithCancel(context.Background())

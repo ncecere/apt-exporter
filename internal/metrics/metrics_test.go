@@ -8,7 +8,7 @@ import (
 
 func TestNewMetrics(t *testing.T) {
 	// Create metrics with a test prefix
-	m := NewMetrics("test")
+	m := NewMetrics("test", true)
 
 	// Check that all metrics are initialized
 	if m.UpdatesAvailable == nil {

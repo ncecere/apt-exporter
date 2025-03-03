@@ -44,5 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Graceful handling of empty or unexpected output from apt-check
 - Fixed apt-check output handling (now captures both stdout and stderr)
 - Updated systemd service to run as root for proper permissions
+- Disabled Go runtime metrics by default for cleaner output
 
 [v0.1.0]: https://github.com/ncecere/apt-exporter/releases/tag/v0.1.0

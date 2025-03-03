@@ -38,8 +38,10 @@ type Metrics struct {
 	LastCollectionTimestamp   Gauge
 }
 
-// NewMetrics creates and registers all metrics with the provided prefix.
-func NewMetrics(prefix string) *Metrics {
+// NewMetrics creates metrics with the provided prefix.
+// If useDefaultRegistry is true, metrics are registered with the default Prometheus registry.
+// Otherwise, they are just created but not registered (caller must register them).
+func NewMetrics(prefix string, useDefaultRegistry bool) *Metrics {
 	m := &Metrics{
 		// Core metrics
 		UpdatesAvailable: prometheus.NewGauge(prometheus.GaugeOpts{
@@ -74,8 +76,28 @@ func NewMetrics(prefix string) *Metrics {
 		}),
 	}
 
-	// Register all metrics with Prometheus
-	prometheus.MustRegister(
+	// Register all metrics with the default Prometheus registry if requested
+	if useDefaultRegistry {
+		prometheus.MustRegister(
+			// Core metrics
+			m.UpdatesAvailable.(prometheus.Collector),
+			m.SecurityUpdatesAvailable.(prometheus.Collector),
+			m.SecondsSinceLastUpdate.(prometheus.Collector),
+			m.RebootRequired.(prometheus.Collector),
+
+			// Collector metrics
+			m.CollectionSuccess.(prometheus.Collector),
+			m.CollectionDurationSeconds.(prometheus.Collector),
+			m.LastCollectionTimestamp.(prometheus.Collector),
+		)
+	}
+
+	return m
+}
+
+// GetCollectors returns all metrics as Prometheus collectors
+func (m *Metrics) GetCollectors() []prometheus.Collector {
+	return []prometheus.Collector{
 		// Core metrics
 		m.UpdatesAvailable.(prometheus.Collector),
 		m.SecurityUpdatesAvailable.(prometheus.Collector),
@@ -86,9 +108,7 @@ func NewMetrics(prefix string) *Metrics {
 		m.CollectionSuccess.(prometheus.Collector),
 		m.CollectionDurationSeconds.(prometheus.Collector),
 		m.LastCollectionTimestamp.(prometheus.Collector),
-	)
-
-	return m
+	}
 }
 
 // NewTestMetrics creates a new Metrics instance with TestGauge implementations for testing

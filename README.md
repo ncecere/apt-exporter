@@ -34,6 +34,10 @@ These metrics are exposed in Prometheus format, allowing you to monitor your Deb
 
 The prefix is configurable in the configuration file (default: `ubuntu`).
 
+### Go Runtime Metrics
+
+By default, the exporter does not expose Go runtime metrics (like memory usage, goroutines, GC stats, etc.). This keeps the metrics output clean and focused on APT-related information. If you need these metrics for debugging or monitoring the exporter itself, you can modify the code in `cmd/apt-exporter/main.go` to use the default Prometheus registry instead of a custom one.
+
 ## Requirements
 
 - Linux (Debian/Ubuntu-based system with APT)
