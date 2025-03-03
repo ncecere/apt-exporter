@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -95,18 +96,42 @@ func (c *Collector) checkUpdates(ctx context.Context) error {
 		return fmt.Errorf("apt-check not found at %s: %w", c.cfg.AptCheckPath, err)
 	}
 
-	out, err := exec.CommandContext(ctx, c.cfg.AptCheckPath).Output()
-	if err != nil {
+	// apt-check outputs to stderr, so we need to capture both stdout and stderr
+	cmd := exec.CommandContext(ctx, c.cfg.AptCheckPath)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+
+	// First check stderr as apt-check typically outputs there
+	out := stderr.Bytes()
+	if len(out) == 0 {
+		// If stderr is empty, try stdout
+		out = stdout.Bytes()
+	}
+
+	if err != nil && len(out) == 0 {
 		c.metrics.UpdatesAvailable.Set(0)
 		c.metrics.SecurityUpdatesAvailable.Set(0)
 		return fmt.Errorf("error running apt-check: %w", err)
 	}
 
-	parts := strings.Split(strings.TrimSpace(string(out)), ";")
-	if len(parts) < 2 {
+	// Trim any whitespace and check if output is empty
+	trimmedOutput := strings.TrimSpace(string(out))
+	if trimmedOutput == "" {
+		c.logger.Println("apt-check returned empty output, assuming 0 updates")
 		c.metrics.UpdatesAvailable.Set(0)
 		c.metrics.SecurityUpdatesAvailable.Set(0)
-		return fmt.Errorf("unexpected output format from apt-check: %s", string(out))
+		return nil
+	}
+
+	// Split by semicolon and validate format
+	parts := strings.Split(trimmedOutput, ";")
+	if len(parts) < 2 {
+		c.logger.Printf("apt-check returned unexpected format: %q, assuming 0 updates", trimmedOutput)
+		c.metrics.UpdatesAvailable.Set(0)
+		c.metrics.SecurityUpdatesAvailable.Set(0)
+		return nil
 	}
 
 	// Parse regular updates

@@ -20,9 +20,9 @@ func TestCollector(t *testing.T) {
 	updateStampPath := filepath.Join(tmpDir, "update-success-stamp")
 	rebootRequiredFile := filepath.Join(tmpDir, "reboot-required")
 
-	// Create a mock apt-check script that outputs "5;2"
+	// Create a mock apt-check script that outputs "5;2" to stderr (like the real apt-check)
 	mockAptCheckContent := `#!/bin/sh
-echo "5;2"
+echo "5;2" >&2
 `
 	if err := os.WriteFile(aptCheckPath, []byte(mockAptCheckContent), 0755); err != nil {
 		t.Fatalf("Failed to create mock apt-check: %v", err)
@@ -110,9 +110,9 @@ echo "5;2"
 		t.Errorf("Expected RebootRequired to be 0 after file removal, got %f", rebootRequired)
 	}
 
-	// Test with invalid apt-check script
+	// Test with invalid apt-check script (outputs to stderr like the real apt-check)
 	invalidAptCheckContent := `#!/bin/sh
-echo "invalid"
+echo "invalid" >&2
 `
 	if err := os.WriteFile(aptCheckPath, []byte(invalidAptCheckContent), 0755); err != nil {
 		t.Fatalf("Failed to update mock apt-check: %v", err)
@@ -121,9 +121,15 @@ echo "invalid"
 	// Collect metrics again
 	c.collect(ctx)
 
-	// Check that collection success is now 0
+	// Check that collection success is still 1 (we now handle invalid output gracefully)
 	collectionSuccess = m.CollectionSuccess.(*metrics.TestGauge).Get()
-	if collectionSuccess != 0 {
-		t.Errorf("Expected CollectionSuccess to be 0 after invalid apt-check, got %f", collectionSuccess)
+	if collectionSuccess != 1 {
+		t.Errorf("Expected CollectionSuccess to be 1 after invalid apt-check (handled gracefully), got %f", collectionSuccess)
+	}
+
+	// Check that updates are set to 0 when format is invalid
+	updatesAvailable = m.UpdatesAvailable.(*metrics.TestGauge).Get()
+	if updatesAvailable != 0 {
+		t.Errorf("Expected UpdatesAvailable to be 0 after invalid apt-check, got %f", updatesAvailable)
 	}
 }

@@ -128,8 +128,9 @@ Description=APT Exporter
 After=network.target
 
 [Service]
-User=nobody
-Group=nogroup
+# Run as root to ensure access to apt-check and other system files
+User=root
+Group=root
 ExecStart=/usr/local/bin/apt-exporter -config /etc/apt-exporter/config.yml
 Restart=always
 RestartSec=10

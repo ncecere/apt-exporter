@@ -7,6 +7,17 @@ This document provides detailed instructions for installing the APT Exporter on 
 - Linux (Debian/Ubuntu-based system with APT)
 - `update-notifier-common` package (provides the `/usr/lib/update-notifier/apt-check` script)
 
+### Installing Prerequisites
+
+On Debian/Ubuntu systems, install the required package:
+
+```bash
+sudo apt-get update
+sudo apt-get install update-notifier-common
+```
+
+This package provides the apt-check script that the exporter uses to collect information about available updates.
+
 ## Installation Methods
 
 ### Method 1: Using Pre-built Binaries from GitHub Releases
@@ -116,8 +127,9 @@ If you prefer to build from source or need to make custom modifications:
    After=network.target
    
    [Service]
-   User=nobody
-   Group=nogroup
+   # Run as root to ensure access to apt-check and other system files
+   User=root
+   Group=root
    ExecStart=/usr/local/bin/apt-exporter -config /etc/apt-exporter/config.yml
    Restart=always
    RestartSec=10
@@ -125,6 +137,8 @@ If you prefer to build from source or need to make custom modifications:
    [Install]
    WantedBy=multi-user.target
    ```
+   
+   > **Note**: The exporter needs to run as root to access system files like apt-check. If you prefer not to run as root, you can create a dedicated user with appropriate permissions to access these files.
 
 3. **Enable and start the service**
 
@@ -164,7 +178,29 @@ If you prefer to build from source or need to make custom modifications:
 
    The exporter needs permission to access the apt-check script. Make sure it's running as a user with appropriate permissions or modify the systemd service to run as root.
 
-2. **Metrics not updating**
+2. **Empty or unexpected output from apt-check**
+
+   If you see errors like "unexpected output format from apt-check" in the logs, it could be due to:
+   
+   - The `update-notifier-common` package is not installed
+   - The apt-check script is not working correctly on your system
+   
+   The exporter will handle empty or unexpected output gracefully by assuming zero updates, but you should check if the apt-check script works correctly:
+   
+   ```bash
+   # Test the apt-check script directly
+   /usr/lib/update-notifier/apt-check
+   
+   # Check the exit code
+   echo $?
+   
+   # Check the stderr output (apt-check outputs to stderr)
+   /usr/lib/update-notifier/apt-check 2>&1
+   ```
+   
+   The output should be in the format "X;Y" where X is the number of updates and Y is the number of security updates.
+
+3. **Metrics not updating**
 
    Check the log output for errors:
 
@@ -172,7 +208,7 @@ If you prefer to build from source or need to make custom modifications:
    sudo journalctl -u apt-exporter
    ```
 
-3. **Configuration file not found**
+4. **Configuration file not found**
 
    Make sure the path to the configuration file is correct in your command or systemd service file.
 
